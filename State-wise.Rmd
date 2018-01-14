@@ -1,0 +1,213 @@
+---
+title: "State wise Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+suppressWarnings(suppressPackageStartupMessages(library(ggplot2)))
+suppressWarnings(suppressPackageStartupMessages(library(dplyr)))
+suppressWarnings(suppressPackageStartupMessages(library(plyr)))
+suppressWarnings(suppressPackageStartupMessages(library(DT)))
+suppressWarnings(suppressPackageStartupMessages(library(readr)))
+suppressWarnings(suppressPackageStartupMessages(library(forecast)))
+suppressWarnings(suppressPackageStartupMessages(library(fpp)))
+suppressWarnings(suppressPackageStartupMessages(library(TTR)))
+suppressWarnings(suppressPackageStartupMessages(library(tseries)))
+library(knitr)
+library(markdown)
+library(rmarkdown)
+
+```
+
+
+# State 
+```{r}
+# run report for current car listed in loop in R file
+s1 <- data[data$STATE==state,]
+datatable(s1)
+```
+
+
+## Parameters - Mean values
+```{r}
+temp <- ddply(s1,~YEAR,summarise,mean=mean(as.numeric(as.double(mean_temp))))
+ph <- ddply(s1,~YEAR,summarise,mean=mean(as.numeric(as.double(mean_ph))))
+conductivity <- ddply(s1,~YEAR,summarise,mean=mean(as.numeric(as.double(mean_conductivity))))
+bod <- ddply(s1,~YEAR,summarise,mean=mean(as.numeric(as.double(mean_bod))))
+nitrate <- ddply(s1,~YEAR,summarise,mean=mean(as.numeric(as.double(mean_nitratenitrite))))
+fecal <- ddply(s1,~YEAR,summarise,mean=mean(as.numeric(as.double(mean_fecalcoliform))))
+```
+
+## Parameter
+```{r echo=FALSE}
+temp1 <- temp$mean
+ph1 <- ph$mean
+conductivity1 <- conductivity$mean
+bod1 <- bod$mean
+nitrate1 <- nitrate$mean
+fecal1 <- fecal$mean
+```
+
+## TimeSeries
+```{r}
+if(state == 'MAHARASHTRA' | state == 'ODISHA' | state == 'RAJASTHAN' | state == 'UTTAR PRADESH' | state == 'WEST BENGAL'){
+## custom
+    temp_ts <-ts(temp1, start=c(2011, 1), end=c(2014, 1), frequency=1)
+    temp_ts
+    ph_ts <-ts(ph1, start=c(2011, 1), end=c(2014, 1), frequency=1)
+    ph_ts
+    conductivity_ts <-ts(conductivity1, start=c(2011, 1), end=c(2014, 1), frequency=1)
+    conductivity_ts
+    bod_ts <- ts(bod1, start=c(2011, 1), end=c(2014, 1), frequency=1)
+    bod_ts
+    nitrate_ts <- ts(nitrate1,  start=c(min(nitrate$YEAR), 1),  end=c(max(nitrate$YEAR),1), frequency=1)
+    nitrate_ts
+    fecal_ts <- ts(fecal1,  start=c(2011, 1), end=c(2014, 1), frequency=1)
+    fecal_ts
+} else {
+##Automate
+  temp_ts <-ts(temp1,  start=c(min(temp$YEAR), 1), end=c(max(temp$YEAR),1), frequency=1)
+  temp_ts
+  ph_ts <-ts(ph1,  start=c(min(ph$YEAR), 1), end=c(max(ph$YEAR),1), frequency=1)
+  ph_ts
+  conductivity_ts <-ts(conductivity1, start=c(min(conductivity$YEAR), 1), end=c(max(conductivity$YEAR),1), frequency=1)
+  conductivity_ts
+  bod_ts <- ts(bod1,  start=c(min(bod$YEAR), 1), end=c(max(bod$YEAR),1), frequency=1)
+  bod_ts
+  nitrate_ts <- ts(nitrate1,  start=c(min(nitrate$YEAR), 1), end=c(max(nitrate$YEAR),1), frequency=1)
+  nitrate_ts
+  fecal_ts <- ts(fecal1,  start=c(min(fecal$YEAR), 1), end=c(max(fecal$YEAR),1), frequency=1)
+  fecal_ts
+}
+```
+
+
+## TimeSeries Plots
+```{r}
+plot(temp_ts)
+plot(ph_ts)
+plot(conductivity_ts)
+plot(bod_ts)
+plot(nitrate_ts)
+plot(fecal_ts)
+```
+
+
+# Holt Winters
+
+
+## Temprature
+```{r}
+fit_temp_ts <- HoltWinters(temp_ts, gamma=FALSE)
+fit_temp_ts 
+pred_temp_ts <- forecast(fit_temp_ts,3)
+
+flag <- FALSE
+for ( i in pred_temp_ts$mean)  if ( i < 0) flag <- TRUE
+if (flag == TRUE)
+  fit_temp_ts <- HoltWinters(temp_ts, beta = FALSE, gamma=FALSE)
+  fit_temp_ts 
+  pred_temp_ts <- forecast(fit_temp_ts,3)
+  
+plot(pred_temp_ts)
+pred_temp_ts 
+
+```
+
+## pH 
+
+```{r}
+fit_ph_ts <- HoltWinters(ph_ts, gamma=FALSE)
+fit_ph_ts 
+pred_ph_ts <- forecast(fit_ph_ts,3)
+
+
+flag <- FALSE
+for ( i in pred_ph_ts$mean)  if ( i < 0) flag <- TRUE
+if (flag == TRUE)
+  fit_ph_ts <- HoltWinters(ph_ts, beta = FALSE, gamma=FALSE)
+  fit_ph_ts 
+  pred_ph_ts <- forecast(fit_ph_ts,3)
+
+plot(pred_ph_ts)
+pred_ph_ts 
+  
+```
+
+## Conductivity
+
+```{r}
+fit_conductivity_ts <- HoltWinters(conductivity_ts, gamma=FALSE)
+fit_conductivity_ts 
+pred_conductivity_ts <- forecast(fit_conductivity_ts,3)
+
+
+flag <- FALSE
+for ( i in pred_conductivity_ts$mean)  if ( i < 0) flag <- TRUE
+if (flag == TRUE)
+  fit_conductivity_ts <- HoltWinters(conductivity_ts,beta = FALSE, gamma=FALSE)
+  fit_conductivity_ts 
+  pred_conductivity_ts <- forecast(fit_conductivity_ts,3)
+
+plot(pred_conductivity_ts)
+pred_conductivity_ts
+```
+
+## BOD 
+
+```{r}
+fit_bod_ts <- HoltWinters(bod_ts, gamma=FALSE)
+fit_bod_ts 
+pred_bod_ts <- forecast(fit_bod_ts,3)
+
+
+flag <- FALSE
+for ( i in pred_bod_ts$mean)  if ( i < 0) flag <- TRUE
+if (flag == TRUE)
+  fit_bod_ts <- HoltWinters(bod_ts, beta = FALSE,gamma=FALSE)
+  fit_bod_ts 
+  pred_bod_ts <- forecast(fit_bod_ts,3)  
+plot(pred_bod_ts)
+pred_bod_ts
+
+```
+
+## Nitrate
+
+```{r}
+fit_nitrate_ts <- HoltWinters(nitrate_ts, gamma=FALSE)
+fit_nitrate_ts 
+pred_nitrate_ts <- forecast(fit_nitrate_ts,3)
+
+
+flag <- FALSE
+for ( i in pred_nitrate_ts$mean)  if ( i < 0) flag <- TRUE
+if (flag == TRUE)
+  fit_nitrate_ts <- HoltWinters(nitrate_ts,beta = FALSE, gamma=FALSE)
+  fit_nitrate_ts 
+  pred_nitrate_ts <- forecast(fit_nitrate_ts,3)  
+
+plot(pred_nitrate_ts)
+pred_nitrate_ts
+
+```
+
+## Fecal
+
+```{r}
+fit_fecal_ts <- HoltWinters(fecal_ts, gamma=FALSE)
+fit_fecal_ts 
+pred_fecal_ts <- forecast(fit_fecal_ts,3)
+
+
+flag <- FALSE
+for ( i in pred_fecal_ts$mean)  if ( i < 0) flag <- TRUE
+if (flag == TRUE)
+  fit_fecal_ts <- HoltWinters(fecal_ts, beta = FALSE, gamma=FALSE)
+  fit_fecal_ts 
+  pred_fecal_ts <- forecast(fit_fecal_ts,3)
+  
+plot(pred_fecal_ts)
+pred_fecal_ts
+
+```
